@@ -43,8 +43,13 @@ class _AdminModuleState extends State<AdminModule> {
                   FutureBuilder<List<Student>>(
                     future: _students,
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const LinearProgressIndicator();
-                      final data = snapshot.data!;
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const LinearProgressIndicator();
+                      }
+                      if (snapshot.hasError) {
+                        return Text('Error al cargar alumnos: ${snapshot.error}');
+                      }
+                      final data = snapshot.data ?? [];
                       return Column(
                         children: data
                             .map(
@@ -76,8 +81,13 @@ class _AdminModuleState extends State<AdminModule> {
                   FutureBuilder<List<GroupSummary>>(
                     future: _groups,
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const LinearProgressIndicator();
-                      final data = snapshot.data!;
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const LinearProgressIndicator();
+                      }
+                      if (snapshot.hasError) {
+                        return Text('Error al cargar grupos: ${snapshot.error}');
+                      }
+                      final data = snapshot.data ?? [];
                       return Column(
                         children: data
                             .map(

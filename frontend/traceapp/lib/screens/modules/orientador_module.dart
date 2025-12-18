@@ -30,21 +30,28 @@ class _OrientadorModuleState extends State<OrientadorModule> {
     if (!widget.docenteMode) return;
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
-    final ok = await widget.apiClient.createReferral({
-      'studentId': _studentController.text,
-      'motive': _motive,
-      'urgency': _urgency,
-      'suggestedDate': DateTime.now().add(const Duration(days: 2)).toIso8601String(),
-      'description': _descriptionController.text,
-    });
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'Derivación enviada' : 'Revisa la API, no se pudo enviar.')),
-    );
-    setState(() => _referrals = widget.apiClient.fetchReferrals());
-    _formKey.currentState?.reset();
-    _studentController.clear();
-    _descriptionController.clear();
+    try {
+      await widget.apiClient.createReferral({
+        'studentId': _studentController.text,
+        'motive': _motive,
+        'urgency': _urgency,
+        'suggestedDate': DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+        'description': _descriptionController.text,
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Derivación enviada')),
+      );
+      setState(() => _referrals = widget.apiClient.fetchReferrals());
+      _formKey.currentState?.reset();
+      _studentController.clear();
+      _descriptionController.clear();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo enviar la derivación: $e')),
+      );
+    }
   }
 
   @override
@@ -125,8 +132,13 @@ class _OrientadorModuleState extends State<OrientadorModule> {
                   FutureBuilder<List<Referral>>(
                     future: _referrals,
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const LinearProgressIndicator();
-                      final data = snapshot.data!;
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const LinearProgressIndicator();
+                      }
+                      if (snapshot.hasError) {
+                        return Text('Error al cargar derivaciones: ${snapshot.error}');
+                      }
+                      final data = snapshot.data ?? [];
                       return Column(
                         children: data
                             .map(

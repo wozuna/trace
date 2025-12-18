@@ -13,8 +13,14 @@ class SummaryCards extends StatelessWidget {
     return FutureBuilder<ReportSummary>(
       future: apiClient.fetchSummary(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error al cargar el dashboard: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: Text('No hay datos disponibles'));
         }
         final summary = snapshot.data!;
         return SingleChildScrollView(

@@ -24,7 +24,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final session = await widget.apiClient.login(
         email: _emailController.text,
@@ -33,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       widget.onLoggedIn(session);
     } catch (e) {
-      setState(() => _error = 'No se pudo iniciar sesión: $e');
+      setState(() => _error = '$e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
