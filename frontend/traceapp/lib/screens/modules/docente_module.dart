@@ -37,15 +37,22 @@ class _DocenteModuleState extends State<DocenteModule> {
       'status': _status,
       'evidence': [],
     };
-    final ok = await widget.apiClient.createActivity(payload);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'Actividad registrada' : 'No se pudo guardar, revisa el backend.')),
-    );
-    setState(() => _activities = widget.apiClient.fetchActivities());
-    _formKey.currentState?.reset();
-    _titleController.clear();
-    _objectivesController.clear();
+    try {
+      await widget.apiClient.createActivity(payload);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Actividad registrada')),
+      );
+      setState(() => _activities = widget.apiClient.fetchActivities());
+      _formKey.currentState?.reset();
+      _titleController.clear();
+      _objectivesController.clear();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo guardar: $e')),
+      );
+    }
   }
 
   @override
@@ -138,8 +145,13 @@ class _DocenteModuleState extends State<DocenteModule> {
                   FutureBuilder<List<Activity>>(
                     future: _activities,
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const LinearProgressIndicator();
-                      final data = snapshot.data!;
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const LinearProgressIndicator();
+                      }
+                      if (snapshot.hasError) {
+                        return Text('Error al cargar actividades: ${snapshot.error}');
+                      }
+                      final data = snapshot.data ?? [];
                       return Column(
                         children: data
                             .map(

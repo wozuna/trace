@@ -35,7 +35,13 @@ class _DirectorModuleState extends State<DirectorModule> {
             child: FutureBuilder<ReportSummary>(
               future: _summary,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('No se pudo cargar el resumen: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData) return const Center(child: Text('Sin datos'));
                 final summary = snapshot.data!;
                 return ListView(
                   children: [
